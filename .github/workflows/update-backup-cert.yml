@@ -1,4 +1,4 @@
-name: Update Backup Cert
+name: Update Backup Certs
 
 on:
   workflow_dispatch:
@@ -13,28 +13,36 @@ jobs:
     - name: Checkout main branch
       uses: actions/checkout@v4
       with:
-        ref: main  # Change to 'master' if that's your default branch
+        ref: main
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Download backup.cert
-      id: download
+    - name: Download backup.cert (deev.is)
       run: |
         response=$(curl -w "%{http_code}" -s -o backup.cert https://deev.is/eagler/backup.cert)
         if [ "$response" -ne 200 ]; then
-          echo "Download failed with status $response"
+          echo "Download failed for backup.cert with status $response"
           exit 1
         fi
-        echo "Download successful"
+        echo "Downloaded backup.cert"
+
+    - name: Download backup2.cert (eaglercraft.com)
+      run: |
+        response=$(curl -w "%{http_code}" -s -o backup2.cert https://eaglercraft.com/backup.cert)
+        if [ "$response" -ne 200 ]; then
+          echo "Download failed for backup2.cert with status $response"
+          exit 1
+        fi
+        echo "Downloaded backup2.cert"
 
     - name: Commit and push if changed
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
 
-        git add backup.cert
+        git add backup.cert backup2.cert
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update backup.cert from deev.is"
+          git commit -m "Update backup.cert and backup2.cert"
           git push origin HEAD
         fi
