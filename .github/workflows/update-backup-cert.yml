@@ -1,0 +1,42 @@
+name: Update Backup Cert
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+
+jobs:
+  update-backup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+      with:
+        ref: main  # or 'master' if that's your default branch
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download backup.cert
+      id: download
+      run: |
+        response=$(curl -w "%{http_code}" -s -o backup.cert https://deev.is/eagler/backup.cert)
+        if [ "$response" -ne 200 ]; then
+          echo "Download failed with status $response"
+          exit 1
+        fi
+        echo "Download successful"
+
+    - name: Replace and commit backup.cert
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+        mv backup.cert ./backup.cert
+
+        git add backup.cert
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update backup.cert from deev.is"
+          git push origin HEAD
+        fi
