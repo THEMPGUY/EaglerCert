@@ -3,7 +3,7 @@ name: Update Backup Cert
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'  # Every hour
+    - cron: '*/5 * * * *'  # Every 5 minutes
 
 jobs:
   update-backup:
@@ -13,7 +13,7 @@ jobs:
     - name: Checkout main branch
       uses: actions/checkout@v4
       with:
-        ref: main  # or 'master' if that's your default branch
+        ref: main  # Change to 'master' if that's your default branch
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download backup.cert
@@ -26,12 +26,10 @@ jobs:
         fi
         echo "Download successful"
 
-    - name: Replace and commit backup.cert
+    - name: Commit and push if changed
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
-
-        mv backup.cert ./backup.cert
 
         git add backup.cert
         if git diff --cached --quiet; then
